@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use crate::account::Account;
 use crate::block::Block;
 use crate::{GENESIS_BLOCK_HASH, BlockType, Height};
@@ -6,27 +6,46 @@ use crate::now;
 
 #[derive(Clone, Debug)]
 pub struct Ledger {
-    pub blocks: HashMap<String, Block>,
+    pub block_pool: HashMap<String, Block>,
+    pub block_pool_queue: VecDeque<String>,
+    pub cemented_blocks: HashMap<String, Block>,
     pub accounts: HashMap<String, Account>
 }
 
 impl Ledger {
     pub fn new () -> Self {
         Ledger {
-            accounts: HashMap::new(),
-            blocks: HashMap::new()
+            block_pool: HashMap::new(),
+            block_pool_queue: VecDeque::new(),
+            cemented_blocks: HashMap::new(),
+            accounts: HashMap::new()
         }
     }
 
+    fn get_account_from_address(&mut self, account: &str) -> &mut Account{
+        let mutable_account_ref = self.accounts.get_mut(account).unwrap();
+        assert_eq!(mutable_account_ref.address, account);
+        return mutable_account_ref;
+    }
+
     fn cement_block (&mut self, block: Block) {
-        &self.blocks.insert(block.calculate_hash().to_string(), block);
+        &self.cemented_blocks.insert(block.calculate_hash().to_string(), block.clone());
+        println!("Cemented block: {:?}, in {} ms", block.calculate_hash(), (now() - block.timestamp));
+    }
+
+    pub fn verify_block (&self, block: &Block) -> bool {
+        let verify_block_amount: bool = match block.block_type {
+            BlockType::Send => { self.verify_send_block(block) }
+            _ => { true }
+        };
+
+        self.verify_block_headers() && verify_block_amount
     }
 
     fn try_block (&mut self, block_type: BlockType, block_account: &str, target_account: &str, amount: u64) {
         &self.accounts.entry(block_account.to_string()).or_insert(Account::new(block_account));
 
-        let account = self.accounts.get_mut(block_account).unwrap();
-        assert_eq!(account.address, block_account);
+        let account = self.get_account_from_address(block_account);
 
         let block: Block = match block_type {
             BlockType::Send => {

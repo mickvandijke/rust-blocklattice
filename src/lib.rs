@@ -10,14 +10,15 @@ pub const GENESIS_BLOCK_HASH: &str = "debad8e36c3464e3ec15380d7ab709e46a4ae4d701
 
 pub type Height = u64;
 pub type Address = String;
+pub type Timestamp = u64;
 
-pub fn now () -> u128 {
-    let duration = SystemTime::now()
+pub fn now () -> u64 {
+    let start = SystemTime::now();
+    let since_the_epoch = start
         .duration_since(UNIX_EPOCH)
-        .unwrap()
-        ;
+        .expect("Time went backwards");
 
-    duration.as_secs() as u128 * 1000 + duration.subsec_millis() as u128
+    since_the_epoch.as_secs() * 1000 + since_the_epoch.subsec_nanos() as u64 / 1_000_000
 }
 
 #[derive(Clone, Debug)]

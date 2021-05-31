@@ -1,5 +1,5 @@
 use crypto_hash::{Algorithm, hex_digest};
-use crate::{BlockType, Height};
+use crate::{BlockType, Height, Timestamp};
 use super::GENESIS_AMOUNT;
 
 #[derive(Clone, Debug)]
@@ -7,14 +7,14 @@ pub struct Block {
     pub height: Height,
     pub block_type: BlockType,
     pub previous_hash: String,
-    pub timestamp: u128,
+    pub timestamp: Timestamp,
     pub account: String,
     pub target_account: String,
     pub amount: u64,
 }
 
 impl Block {
-    pub fn new (height: Height, account: &str, block_type: BlockType, previous_hash: &str, timestamp: u128, target_account: &str, amount: u64) -> Self {
+    pub fn new (height: Height, account: &str, block_type: BlockType, previous_hash: &str, timestamp: Timestamp, target_account: &str, amount: u64) -> Self {
         Block {
             height,
             block_type,
@@ -26,11 +26,11 @@ impl Block {
         }
     }
 
-    pub fn new_send (height: Height, account: &str, previous_hash: &str, timestamp: u128, target_account: &str, amount: u64) -> Self {
+    pub fn new_send (height: Height, account: &str, previous_hash: &str, timestamp: Timestamp, target_account: &str, amount: u64) -> Self {
         Block::new(height, account, BlockType::Send, previous_hash, timestamp, target_account, amount)
     }
 
-    pub fn new_receive (height: Height, account: &str, previous_hash: &str, timestamp: u128, target_account: &str, amount: u64) -> Self {
+    pub fn new_receive (height: Height, account: &str, previous_hash: &str, timestamp: Timestamp, target_account: &str, amount: u64) -> Self {
         Block::new(height, account, BlockType::Receive, previous_hash, timestamp, target_account, amount)
     }
 
