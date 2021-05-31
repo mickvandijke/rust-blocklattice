@@ -18,7 +18,11 @@ impl Account {
     }
 
     pub fn add_block (&mut self, block: Block) {
-        &self.blockchain.push(block);
+        self.blockchain.push(block.clone());
+        match block.block_type {
+            BlockType::Send => { self.balance -= block.amount }
+            BlockType::Receive => { self.balance += block.amount }
+        }
     }
 
     pub fn verify_block_ownership (&self, block: &Block) -> bool {

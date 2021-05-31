@@ -29,21 +29,44 @@ impl Ledger {
     }
 
     fn cement_block (&mut self, block: Block) {
-        &self.cemented_blocks.insert(block.calculate_hash().to_string(), block.clone());
+        self.cemented_blocks.insert(block.calculate_hash().to_string(), block.clone());
         println!("Cemented block: {:?}, in {} ms", block.calculate_hash(), (now() - block.timestamp));
     }
 
-    pub fn verify_block (&self, block: &Block) -> bool {
+    pub fn verify_block (&mut self, block: &Block) -> bool {
+        let account = self.get_account_from_address(&block.account);
+
+        if !account.verify_block_ownership(block) {
+            return false
+        }
+
         let verify_block_amount: bool = match block.block_type {
             BlockType::Send => { self.verify_send_block(block) }
             _ => { true }
         };
 
-        self.verify_block_headers() && verify_block_amount
+         verify_block_amount
     }
 
-    fn try_block (&mut self, block_type: BlockType, block_account: &str, target_account: &str, amount: u64) {
-        &self.accounts.entry(block_account.to_string()).or_insert(Account::new(block_account));
+    fn verify_send_block (&mut self, block: &Block) -> bool {
+        let account = self.get_account_from_address(&block.account);
+
+        block.account != block.target_account && block.amount <= account.balance
+    }
+
+    fn try_block (&mut self, block: Block) {
+        if self.verify_block(&block) {
+            self.cement_block(block.clone());
+            let account = self.get_account_from_address(&block.account);
+            account.add_block(block.clone());
+        }
+         else {
+             println!("Block: {}, rejected.", block.calculate_hash());
+         }
+    }
+
+    fn new_block (&mut self, block_type: BlockType, block_account: &str, target_account: &str, amount: u64) -> Block {
+        self.accounts.entry(block_account.to_string()).or_insert(Account::new(block_account));
 
         let account = self.get_account_from_address(block_account);
 
@@ -68,14 +91,17 @@ impl Ledger {
             }
         };
 
-        if account.verify_block(&block) {
-            &account.add_block(block.clone());
-            &self.cement_block(block.clone());
-        }
+        return block;
     }
 
     pub fn new_send_block (&mut self, block_account: &str, target_account: &str, amount: u64) {
-        &self.try_block(BlockType::Send, block_account, target_account, amount);
+        let block = self.new_block(BlockType::Send, block_account, target_account, amount);
+        self.try_block(block);
+    }
+
+    pub fn new_receive_block (&mut self, block_account: &str, target_account: &str, amount: u64) {
+        let block = self.new_block(BlockType::Receive, block_account, target_account, amount);
+        self.try_block(block);
     }
 
     pub fn verify_account_exists(&self, account: &str) -> bool {
@@ -85,7 +111,7 @@ impl Ledger {
     pub fn new_account(&mut self, account: &str) {
         let new_account = Account::new(&account);
 
-        &self.accounts.insert(
+        self.accounts.insert(
             (&new_account.address).to_string(),
             new_account
         );
@@ -106,6 +132,6 @@ impl Ledger {
         );
         assert_eq!(self.verify_account_exists("genesis"), true);
 
-        &self.cement_block(genesis_block.clone());
+        self.cement_block(genesis_block.clone());
     }
 }
