@@ -5,6 +5,7 @@ pub mod ledger;
 use std::time::{ SystemTime, UNIX_EPOCH };
 use std::fmt::{ self, Debug };
 
+pub const GENESIS_ADDRESS: &str = "genesis";
 pub const GENESIS_AMOUNT: u64 = 117000000;
 pub const GENESIS_BLOCK_HASH: &str = "debad8e36c3464e3ec15380d7ab709e46a4ae4d701d19756f3416ddf398f6007";
 
