@@ -1,3 +1,4 @@
 # Rust Block Lattice
 
-Inspired by the NANO cryptocurrency. Fully written in Rust.
+RBL is a DAG based cryptocurrency aiming to implement the Nano [whitepaper](https://content.nano.org/whitepaper/Nano_Whitepaper_en.pdf).
+RBL will however also introduce staking rewards to Node runners.
